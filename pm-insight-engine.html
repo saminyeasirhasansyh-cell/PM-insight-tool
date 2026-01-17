@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>PM Insight Engine – Cloudflare DX</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-50 min-h-screen">
+  <div class="max-w-7xl mx-auto px-4 py-6 md:py-10">
+    <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+      <div>
+        <h1 class="text-2xl md:text-3xl font-black tracking-tight text-white">PM Insight Engine</h1>
+        <p class="text-sm md:text-base text-slate-300 mt-1">Cloudflare Wrangler, Pages, and Tunnels – 100-issue JTBD analysis</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="text-right">
+          <p class="text-xs uppercase tracking-wide text-slate-400 font-semibold">Global Sentiment Lift</p>
+          <p id="sentimentLiftValue" class="text-3xl font-black text-emerald-400">+0%</p>
+          <p class="text-[11px] text-slate-400">Includes dependencies</p>
+        </div>
+      </div>
+    </header>
+
+    <main class="grid md:grid-cols-3 gap-4 md:gap-6">
+      <button data-cluster-id="develop-locally" class="cluster-card group relative flex flex-col items-start justify-between rounded-2xl bg-slate-800/70 hover:bg-slate-800 border border-slate-700/70 hover:border-orange-400/80 transition-all shadow-lg px-5 py-6 text-left">
+        <div>
+          <p class="text-[11px] uppercase tracking-[0.16em] text-slate-400 font-semibold mb-2">JTBD Cluster</p>
+          <h2 class="text-xl font-black text-white mb-1">Develop Locally</h2>
+          <p class="text-sm text-slate-300 mb-3">Wrangler CLI stability, slow dev loop, and local DX friction</p>
+        </div>
+        <div class="flex items-center justify-between w-full mt-2">
+          <div>
+            <p class="text-[11px] uppercase text-slate-400 font-semibold">Issue volume</p>
+            <p id="cluster-count-develop-locally" class="text-lg font-black text-orange-400">0</p>
+          </div>
+          <div class="flex items-center gap-2 text-xs text-slate-400">
+            <span class="h-2 w-2 rounded-full bg-orange-400/80"></span>
+            <span>Local dev & CLI</span>
+          </div>
+        </div>
+      </button>
+
+      <button data-cluster-id="deploy-reliably" class="cluster-card group relative flex flex-col items-start justify-between rounded-2xl bg-slate-800/70 hover:bg-slate-800 border border-slate-700/70 hover:border-orange-400/80 transition-all shadow-lg px-5 py-6 text-left">
+        <div>
+          <p class="text-[11px] uppercase tracking-[0.16em] text-slate-400 font-semibold mb-2">JTBD Cluster</p>
+          <h2 class="text-xl font-black text-white mb-1">Deploy Reliably</h2>
+          <p class="text-sm text-slate-300 mb-3">Pages, state sync, and cache behaviours that break CI/CD trust</p>
+        </div>
+        <div class="flex items-center justify-between w-full mt-2">
+          <div>
+            <p class="text-[11px] uppercase text-slate-400 font-semibold">Issue volume</p>
+            <p id="cluster-count-deploy-reliably" class="text-lg font-black text-orange-400">0</p>
+          </div>
+          <div class="flex items-center gap-2 text-xs text-slate-400">
+            <span class="h-2 w-2 rounded-full bg-emerald-400/70"></span>
+            <span>State & cache</span>
+          </div>
+        </div>
+      </button>
+
+      <button data-cluster-id="secure-network" class="cluster-card group relative flex flex-col items-start justify-between rounded-2xl bg-slate-800/70 hover:bg-slate-800 border border-slate-700/70 hover:border-orange-400/80 transition-all shadow-lg px-5 py-6 text-left">
+        <div>
+          <p class="text-[11px] uppercase tracking-[0.16em] text-slate-400 font-semibold mb-2">JTBD Cluster</p>
+          <h2 class="text-xl font-black text-white mb-1">Secure Network</h2>
+          <p class="text-sm text-slate-300 mb-3">Tunnels, auth flows, and logging that influence trust</p>
+        </div>
+        <div class="flex items-center justify-between w-full mt-2">
+          <div>
+            <p class="text-[11px] uppercase text-slate-400 font-semibold">Issue volume</p>
+            <p id="cluster-count-secure-network" class="text-lg font-black text-orange-400">0</p>
+          </div>
+          <div class="flex items-center gap-2 text-xs text-slate-400">
+            <span class="h-2 w-2 rounded-full bg-sky-400/80"></span>
+            <span>Tunnels & auth</span>
+          </div>
+        </div>
+      </button>
+    </main>
+  </div>
+
+  <div id="clusterModal" class="fixed inset-0 z-40 hidden" aria-hidden="true">
+    <div id="modalBackdrop" class="absolute inset-0 bg-black/60 opacity-0 transition-opacity"></div>
+    <div id="modalPanel" class="absolute inset-x-0 bottom-0 top-10 bg-slate-900 border-t border-slate-700 rounded-t-3xl shadow-2xl translate-y-full transition-transform duration-300 flex flex-col">
+      <div class="max-w-6xl mx-auto px-4 pt-4 pb-4 md:pt-5 md:pb-6 flex flex-col flex-1 w-full">
+        <div class="flex items-start justify-between gap-4 mb-4 md:mb-5 flex-none">
+          <div>
+            <p id="modalClusterLabel" class="text-[11px] uppercase tracking-[0.16em] text-slate-400 font-semibold mb-1">Cluster</p>
+            <h2 id="modalClusterTitle" class="text-xl md:text-2xl font-black text-white">Cluster title</h2>
+            <p id="modalClusterSubtitle" class="text-sm text-slate-300 mt-1">Subtitle</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <button id="modalCloseBtn" class="inline-flex items-center justify-center rounded-full border border-slate-600/70 bg-slate-800/80 hover:bg-slate-700 px-3 py-1.5 text-xs font-semibold text-slate-100 shadow-sm">Close</button>
+          </div>
+        </div>
+        <div class="flex-1 overflow-y-auto no-scrollbar pb-2">
+          <div class="space-y-4 md:space-y-5">
+            <div class="grid md:grid-cols-3 gap-3 md:gap-4">
+              <div class="rounded-2xl border border-slate-700 bg-slate-800/80 px-4 py-3">
+                <p class="text-[11px] uppercase tracking-[0.16em] text-slate-400 font-semibold mb-1">Sentiment mix</p>
+                <p id="modalSentimentSummary" class="text-sm text-slate-200">Loading…</p>
+              </div>
+              <div class="rounded-2xl border border-slate-700 bg-slate-800/80 px-4 py-3">
+                <p class="text-[11px] uppercase tracking-[0.16em] text-slate-400 font-semibold mb-1">Walls vs hurdles</p>
+                <p id="modalImpactSummary" class="text-sm text-slate-200">Loading…</p>
+              </div>
+              <div class="rounded-2xl border border-slate-700 bg-slate-800/80 px-4 py-3">
+                <p class="text-[11px] uppercase tracking-[0.16em] text-slate-400 font-semibold mb-1">Rival set</p>
+                <p id="modalRivalSummary" class="text-sm text-slate-200">Vercel, Netlify, Tailscale</p>
+              </div>
+            </div>
+            <div class="space-y-3 md:space-y-4" id="issuesContainer"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+(function() {
+  const TOTAL = 100;
+  const LIFT = 100 / TOTAL;
+  
+  const data = [
+    {id:1,title:"wrangler dev extremely slow on cold start",cluster:"develop-locally",rc:"Remote edge runtime lacks local caching",sentiment:"Critical/Angry",impact:"Wall",rival:"Vercel",metrics:{cloudflare:{dx:5,reliability:6,ecosystem:7},rival:{dx:9,reliability:8,ecosystem:9}},dependsOn:[]},
+    {id:2,title:"wrangler dev fails when no wrangler.toml present",cluster:"develop-locally",rc:"Config discovery without graceful fallback",sentiment:"Frustrated",impact:"Wall",rival:"Netlify",metrics:{cloudflare:{dx:6,reliability:7,ecosystem:7},rival:{dx:9,reliability:8,ecosystem:8}},dependsOn:[1]},
+    {id:3,title:"Auth errors when running wrangler behind VPN",cluster:"develop-locally",rc:"CLI auth flow times out with VPN",sentiment:"Critical/Angry",impact:"Wall",rival:"Vercel",metrics:{cloudflare:{dx:5,reliability:5,ecosystem:7},rival:{dx:8,reliability:8,ecosystem:8}},dependsOn:[]},
+    {id:4,title:"Durable Object dev server crashes on stream cancel",cluster:"develop-locally",rc:"Stream cancellation not handled",sentiment:"Frustrated",impact:"Wall",rival:"Supabase",metrics:{cloudflare:{dx:6,reliability:6,ecosystem:7},rival:{dx:8,reliability:8,ecosystem:8}},dependsOn:[1]},
+    {id:5,title:"wrangler preview mismatch with edge behaviour",cluster:"develop-locally",rc:"Preview diverges from real edge",sentiment:"Annoyed",impact:"Hurdle",rival:"Vercel",metrics:{cloudflare:{dx:6,reliability:6,ecosystem:7},rival:{dx:9,reliability:8,ecosystem:8}},dependsOn:[1,4]},
+    ...Array.from({length:24},(_, i)=>({id:6+i,title:`Wrangler dev inconsistency #${6+i}`,cluster:"develop-locally",rc:"Local dev runtime diverges from production",sentiment:["Critical/Angry","Frustrated","Annoyed"][i%3],impact:["Wall","Hurdle"][i%2],rival:["Vercel","Netlify","Supabase"][i%3],metrics:{cloudflare:{dx:6,reliability:6+(i%3),ecosystem:7},rival:{dx:8+(i%2),reliability:8,ecosystem:8}},dependsOn:(6+i)%3===0?[1]:[]})),
+    {id:35,title:"Pages Git integration not deploying latest commit",cluster:"deploy-reliably",rc:"Webhook or commit pointer not updating",sentiment:"Critical/Angry",impact:"Wall",rival:"Vercel",metrics:{cloudflare:{dx:6,reliability:5,ecosystem:7},rival:{dx:9,reliability:9,ecosystem:9}},dependsOn:[]},
+    {id:36,title:"pages deploy succeeds but production not updated",cluster:"deploy-reliably",rc:"Preview vs production alias mismatch",sentiment:"Frustrated",impact:"Wall",rival:"Netlify",metrics:{cloudflare:{dx:6,reliability:6,ecosystem:7},rival:{dx:9,reliability:9,ecosystem:8}},dependsOn:[35]},
+    {id:37,title:"Durable Objects errors only visible after large rollout",cluster:"deploy-reliably",rc:"Build errors found after 1M+ objects",sentiment:"Frustrated",impact:"Hurdle",rival:"Supabase",metrics:{cloudflare:{dx:6,reliability:7,ecosystem:7},rival:{dx:8,reliability:8,ecosystem:8}},dependsOn:[35]},
+    {id:38,title:"Cache keeps serving stale content after auth expiration",cluster:"deploy-reliably",rc:"Service worker prevents re-auth prompt",sentiment:"Critical/Angry",impact:"Wall",rival:"Vercel",metrics:{cloudflare:{dx:5,reliability:5,ecosystem:7},rival:{dx:8,reliability:8,ecosystem:8}},dependsOn:[]},
+    {id:39,title:"Pages deployments fail when Git permissions not set up",cluster:"deploy-reliably",rc:"Partial Git app install causes silent fail",sentiment:"Annoyed",impact:"Hurdle",rival:"Netlify",metrics:{cloudflare:{dx:6,reliability:6,ecosystem:7},rival:{dx:9,reliability:8,ecosystem:8}},dependsOn:[35]},
+    ...Array.from({length:25},(_, i)=>({id:40+i,title:`State/cache inconsistency #${40+i}`,cluster:"deploy-reliably",rc:"Edge cache or state sync creates non-deterministic outcomes",sentiment:["Critical/Angry","Frustrated","Annoyed"][i%3],impact:["Wall","Hurdle"][i%2],rival:["Vercel","Netlify","Supabase"][i%3],metrics:{cloudflare:{dx:6,reliability:6+(i%3),ecosystem:7},rival:{dx:8+(i%2),reliability:8,ecosystem:8}},dependsOn:(40+i)%4===0?[35]:[]})),
+    {id:77,title:"cloudflared tunnel needs non-interactive auth for K8s",cluster:"secure-network",rc:"Interactive login blocks automation",sentiment:"Critical/Angry",impact:"Wall",rival:"Tailscale",metrics:{cloudflare:{dx:5,reliability:7,ecosystem:7},rival:{dx:9,reliability:9,ecosystem:8}},dependsOn:[]},
+    {id:78,title:"Tunnel GitHub SSO organization scoping confusing",cluster:"secure-network",rc:"UI defaults steer to wrong selector",sentiment:"Frustrated",impact:"Hurdle",rival:"Tailscale",metrics:{cloudflare:{dx:6,reliability:8,ecosystem:7},rival:{dx:9,reliability:9,ecosystem:8}},dependsOn:[77]},
+    {id:79,title:"Authorization headers logged in debug tunnel logs",cluster:"secure-network",rc:"Debug logging without redaction",sentiment:"Critical/Angry",impact:"Wall",rival:"Tailscale",metrics:{cloudflare:{dx:5,reliability:6,ecosystem:7},rival:{dx:9,reliability:9,ecosystem:8}},dependsOn:[]},
+    {id:80,title:"Zero Trust token expiry breaks sync behind Access",cluster:"secure-network",rc:"Token expiry not coordinated with cache",sentiment:"Frustrated",impact:"Wall",rival:"Tailscale",metrics:{cloudflare:{dx:6,reliability:6,ecosystem:7},rival:{dx:9,reliability:9,ecosystem:8}},dependsOn:[79]},
+    {id:81,title:"Confusing Access policy editor for GitHub org",cluster:"secure-network",rc:"Selector dropdown overload",sentiment:"Annoyed",impact:"Hurdle",rival:"Tailscale",metrics:{cloudflare:{dx:6,reliability:8,ecosystem:7},rival:{dx:9,reliability:9,ecosystem:8}},dependsOn:[77]},
+    ...Array.from({length:28},(_, i)=>({id:82+i,title:`Tunnel/auth modernization gap #${82+i}`,cluster:"secure-network",rc:"Tunnel, Access, or Zero Trust config friction",sentiment:["Critical/Angry","Frustrated","Annoyed"][i%3],impact:["Wall","Hurdle"][i%2],rival:"Tailscale",metrics:{cloudflare:{dx:6,reliability:7,ecosystem:7},rival:{dx:9,reliability:9,ecosystem:8}},dependsOn:(82+i)%5===0?[77]:[]}))
+  ];
+  
+  const depMap = new Map();
+  data.forEach(i=>depMap.set(i.id,new Set()));
+  data.forEach(i=>(i.dependsOn||[]).forEach(p=>{if(!depMap.has(p))depMap.set(p,new Set());depMap.get(p).add(i.id)}));
+  
+  const resolved = new Set();
+  let lift = 0;
+  
+  function updateLift() {
+    document.getElementById("sentimentLiftValue").textContent = `+${lift.toFixed(0)}%`;
+  }
+  
+  function getDeps(id) {
+    const v = new Set();
+    const s = [id];
+    while(s.length) {
+      const c = s.pop();
+      const d = depMap.get(c);
+      if(d)d.forEach(ch=>{if(!v.has(ch)){v.add(ch);s.push(ch)}});
+    }
+    v.delete(id);
+    return v;
+  }
+  
+  function apply(ids, res) {
+    let c = 0;
+    ids.forEach(id=>{
+      if(res){if(!resolved.has(id)){resolved.add(id);c++}}
+      else{if(resolved.has(id)){resolved.delete(id);c--}}
+    });
+    lift = Math.min(100, Math.max(0, lift + c * LIFT));
+    updateLift();
+  }
+  
+  function toggle(id, res) {
+    const a = new Set([id]);
+    getDeps(id).forEach(i=>a.add(i));
+    if(res) {
+      apply(a, true);
+    } else {
+      const u = new Set([id]);
+      getDeps(id).forEach(i=>{
+        const issue = data.find(x=>x.id===i);
+        const still = (issue.dependsOn||[]).filter(p=>p!==id&&resolved.has(p));
+        if(!still.length)u.add(i);
+      });
+      apply(u, false);
+    }
+  }
+  
+  function updateCounts() {
+    const c = {"develop-locally":0,"deploy-reliably":0,"secure-network":0};
+    data.forEach(i=>{if(c[i.cluster]!==undefined)c[i.cluster]++});
+    document.getElementById("cluster-count-develop-locally").textContent = c["develop-locally"];
+    document.getElementById("cluster-count-deploy-reliably").textContent = c["deploy-reliably"];
+    document.getElementById("cluster-count-secure-network").textContent = c["secure-network"];
+  }
+  
+  const meta = {
+    "develop-locally":{title:"Develop Locally – Wrangler & CLI",subtitle:"Stability and parity issues in wrangler dev",sp:"Local dev mood:",ip:"Iteration risk:",rs:"Vercel / Netlify"},
+    "deploy-reliably":{title:"Deploy Reliably – State & Cache",subtitle:"CI/CD and cache issues breaking trust",sp:"Deploy mood:",ip:"Release risk:",rs:"Vercel / Netlify / Supabase"},
+    "secure-network":{title:"Secure Network – Tunnels & Auth",subtitle:"Tunnel auth and Zero Trust flows",sp:"Security mood:",ip:"Rollout risk:",rs:"Tailscale"}
+  };
+  
+  const modal = document.getElementById("clusterModal");
+  const backdrop = document.getElementById("modalBackdrop");
+  const panel = document.getElementById("modalPanel");
+  const closeBtn = document.getElementById("modalCloseBtn");
+  const container = document.getElementById("issuesContainer");
+  
+  function stats(issues) {
+    const s = {"Critical/Angry":0,Frustrated:0,Annoyed:0};
+    const im = {Wall:0,Hurdle:0};
+    issues.forEach(i=>{s[i.sentiment]=(s[i.sentiment]||0)+1;im[i.impact]=(im[i.impact]||0)+1});
+    return {s, im};
+  }
+  
+  function sTxt(c) {
+    const t = c["Critical/Angry"]+c.Frustrated+c.Annoyed;
+    if(!t)return "No issues";
+    const cr = (c["Critical/Angry"]/t)*100;
+    const fr = (c.Frustrated/t)*100;
+    if(cr>40)return "Dominated by critical/angry users";
+    if(fr>40)return "Mostly frustrated users";
+    return "Majority mildly annoyed";
+  }
+  
+  function iTxt(c) {
+    const t = c.Wall+c.Hurdle;
+    if(!t)return "No data";
+    return (c.Wall/t)*100>50?"More walls than hurdles":"More hurdles than walls";
+  }
+  
+  function open(cid) {
+    const m = meta[cid];
+    const issues = data.filter(i=>i.cluster===cid);
+    const st = stats(issues);
+    
+    document.getElementById("modalClusterTitle").textContent = m.title;
+    document.getElementById("modalClusterSubtitle").textContent = m.subtitle;
+    document.getElementById("modalSentimentSummary").textContent = m.sp+" "+sTxt(st.s);
+    document.getElementById("modalImpactSummary").textContent = m.ip+" "+iTxt(st.im);
+    document.getElementById("modalRivalSummary").textContent = m.rs;
+    
+    container.innerHTML = "";
+    issues.forEach(issue=>{
+      const deps = getDeps(issue.id);
+      const lbl = deps.size>0?`Resolves ${deps.size+1} issues`:"Resolves this only";
+      
+      const card = document.createElement("div");
+      card.className = "rounded-2xl border border-slate-700 bg-slate-800/80 px-4 py-3 md:px-5 md:py-4 space-y-2";
+      
+      const sCol = issue.sentiment==="Critical/Angry"?"bg-rose-500/15 text-rose-300 border-rose-500/40":issue.sentiment==="Frustrated"?"bg-amber-500/15 text-amber-300 border-amber-500/40":"bg-sky-500/15 text-sky-300 border-sky-500/40";
+      const iCol = issue.impact==="Wall"?"bg-red-500/15 text-red-300 border-red-500/40":"bg-emerald-500/15 text-emerald-300 border-emerald-500/40";
+      
+      card.innerHTML = `
+        <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-2">
+          <div>
+            <p class="text-[11px] uppercase tracking-[0.16em] text-slate-400 font-semibold">Issue #${issue.id}</p>
+            <h3 class="text-sm md:text-base font-black text-white mt-1">${issue.title}</h3>
+          </div>
+          <div class="flex flex-wrap gap-2 text-[11px]">
+            <span class="inline-flex items-center rounded-full border ${sCol} px-2 py-0.5 font-semibold">${issue.sentiment}</span>
+            <span class="inline-flex items-center rounded-full border ${iCol} px-2 py-0.5 font-semibold">${issue.impact}</span>
+            <span class="inline-flex items-center rounded-full border border-slate-600/80 bg-slate-900/60 px-2 py-0.5 font-semibold text-slate-200">${issue.rival}</span>
+          </div>
+        </div>
+        <p class="text-xs md:text-sm text-slate-300">RC: ${issue.rc}</p>
+        <div class="grid grid-cols-3 gap-3 text-[11px]">
+          <div>
+            <p class="uppercase tracking-[0.16em] text-slate-400 font-semibold mb-1">DX</p>
+            <div class="space-y-1">
+              <div class="h-1.5 rounded-full bg-slate-700 overflow-hidden">
+                <div class="h-full bg-orange-400" style="width:${(issue.metrics.cloudflare.dx/10)*100}%"></div>
+              </div>
+              <div class="h-1.5 rounded-full bg-slate-700 overflow-hidden">
+                <div class="h-full bg-slate-400" style="width:${(issue.metrics.rival.dx/10)*100}%"></div>
+              </div>
+              <div class="flex justify-between text-[10px] text-slate-400">
+                <span>CF:${issue.metrics.cloudflare.dx}</span>
+                <span>${issue.rival}:${issue.metrics.rival.dx}</span>
+              </div>
+            </div>
+          </div>
+          <div>
+            <p class="uppercase tracking-[0.16em] text-slate-400 font-semibold mb-1">Reliability</p>
+            <div class="space-y-1">
+              <div class="h-1.5 rounded-full bg-slate-700 overflow-hidden">
+                <div class="h-full bg-orange-400" style="width:${(issue.metrics.cloudflare.reliability/10)*100}%"></div>
+              </div>
+              <div class="h-1.5 rounded-full bg-slate-700 overflow-hidden">
+                <div class="h-full bg-slate-400" style="width:${(issue.metrics.rival.reliability/10)*100}%"></div>
+              </div>
+              <div class="flex justify-between text-[10px] text-slate-400">
+                <span>CF:${issue.metrics.cloudflare.reliability}</span>
+                <span>${issue.rival}:${issue.metrics.rival.reliability}</span>
+              </div>
+            </div>
+          </div>
+          <div>
+            <p class="uppercase tracking-[0.16em] text-slate-400 font-semibold mb-1">Ecosystem</p>
+            <div class="space-y-1">
+              <div class="h-1.5 rounded-full bg-slate-700 overflow-hidden">
+                <div class="h-full bg-orange-400" style="width:${(issue.metrics.cloudflare.ecosystem/10)*100}%"></div>
+              </div>
+              <div class="h-1.5 rounded-full bg-slate-700 overflow-hidden">
+                <div class="h-full bg-slate-400" style="width:${(issue.metrics.rival.ecosystem/10)*100}%"></div>
+              </div>
+              <div class="flex justify-between text-[10px] text-slate-400">
+                <span>CF:${issue.metrics.cloudflare.ecosystem}</span>
+                <span>${issue.rival}:${issue.metrics.rival.ecosystem}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="mt-2 flex flex-col md:flex-row md:items-center md:justify-between gap-2 border-t border-slate-700/70 pt-2">
+          <p class="text-[11px] text-slate-400">${lbl}. Toggle to simulate resolution.</p>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" class="sr-only peer" ${resolved.has(issue.id)?"checked":""}>
+            <div class="w-10 h-5 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:bg-emerald-500/80 transition-colors"></div>
+            <div class="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full border border-slate-300 transition-transform peer-checked:translate-x-5"></div>
+          </label>
+        </div>
+      `;
+      
+      const chk = card.querySelector("input");
+      chk.addEventListener("change", e=>toggle(issue.id, e.target.checked));
+      
+      container.appendChild(card);
+    });
+    
+    modal.classList.remove("hidden");
+    requestAnimationFrame(()=>{
+      backdrop.classList.remove("opacity-0");
+      backdrop.classList.add("opacity-100");
+      panel.classList.remove("translate-y-full");
+      panel.classList.add("translate-y-0");
+    });
+  }
+  
+  function close() {
+    backdrop.classList.remove("opacity-100");
+    backdrop.classList.add("opacity-0");
+    panel.classList.remove("translate-y-0");
+    panel.classList.add("translate-y-full");
+    setTimeout(()=>modal.classList.add("hidden"), 220);
+  }
+  
+  document.addEventListener("DOMContentLoaded", ()=>{
+    updateCounts();
+    updateLift();
+    document.querySelectorAll(".cluster-card").forEach(c=>c.addEventListener("click",()=>open(c.getAttribute("data-cluster-id"))));
+    closeBtn.addEventListener("click", close);
+    backdrop.addEventListener("click", close);
+    document.addEventListener("keydown", e=>{if(e.key==="Escape"&&!modal.classList.contains("hidden"))close()});
+  });
+})();
+  </script>
+</body>
+</html>

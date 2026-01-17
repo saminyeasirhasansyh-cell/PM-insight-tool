@@ -1,0 +1,20 @@
+{
+  "name": "pm-insight-engine",
+  "version": "1.0.0",
+  "description": "PM Insight Engine: Analyzes 100 mock DX issues across 3 JTBD clusters with sentiment, rival benchmarks, dependency resolution.",
+  "main": "src/index.js",
+  "scripts": {
+    "deploy": "wrangler deploy"
+  },
+  "keywords": [
+    "cloudflare",
+    "worker",
+    "pm",
+    "insight"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}

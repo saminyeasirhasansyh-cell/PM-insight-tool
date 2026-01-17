@@ -1,0 +1,14 @@
+name = "pm-insight-engine"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+
+[assets]
+directory = "public"
+binding = "ASSETS"
+
+[[d1_databases]]
+binding = "ISSUE_DB"
+database_name = "pm-insight-db"
+database_id = "5ada4ea6-bf87-494a-a99d-4aecbb051ee2"
+
+# Workers AI is automatically available as env.AI in workers

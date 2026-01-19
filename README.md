@@ -1,7 +1,7 @@
 # PM-insight-tool
 
 PM Insight Engine: Cloudflare DX Feedback Analyzer
-This project was built for the Cloudflare Product Manager Intern (Summer 2026) Assignment. It is a prototype tool designed to help Product Managers aggregate, analyze, and derive meaningful insights from scattered developer feedback across multiple channels like Discord, GitHub, and Support Tickets.
+This project was built as a fast Vibe Coding project to showcase from project Ideation to shipping in 3 hours. It is a prototype tool designed to help Product Managers aggregate, analyze, and derive meaningful insights from scattered developer feedback across multiple channels like Discord, GitHub, and Support Tickets.
 
 
 

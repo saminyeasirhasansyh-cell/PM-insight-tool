@@ -8,15 +8,15 @@
 	},
 	"observability": {
 		"enabled": true
-	},
-	"ai": {
-		"binding": "AI"
-	},
-	"d1_databases": [
-		{
-			"binding": "DB",
-			"database_name": "pm-insights-db",
-			"database_id": "xxxx-xxxx-xxxx-xxxx-xxxx"
-		}
-	]
+	}
+	// "ai": {
+	// 	"binding": "AI"
+	// },
+	// "d1_databases": [
+	// 	{
+	// 		"binding": "DB",
+	// 		"database_name": "pm-insights-db",
+	// 		"database_id": "xxxx-xxxx-xxxx-xxxx-xxxx"
+	// 	}
+	// ]
 }

@@ -3,8 +3,7 @@
 > **A "Second Brain" for Product Managers.**
 > Automatically synthesize competitive intel, customer feedback, and hidden patterns into actionable strategy using AI.
 
-![PM Insight Engine Dashboard](https://github.com/saminyeasirhasansyh-cell/PM-insight-tool/assets/placeholder-image-url)
-*(Note: Replace with actual screenshot)*
+
 
 ## 🌟 Overview
 
